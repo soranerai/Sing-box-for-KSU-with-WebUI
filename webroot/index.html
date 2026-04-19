@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Sing-Box Manager</title>
+  <style>
+    :root {
+      --bg: #050508;
+      --surface: rgba(21, 22, 27, 0.6);
+      --surface-2: rgba(28, 31, 39, 0.6);
+      --surface-3: rgba(35, 39, 51, 0.8);
+      --accent: #5b8cff;
+      --accent-2: #bd5cff;
+      --success: #39d98a;
+      --danger: #ff6b6b;
+      --text: #f4f6fb;
+      --muted: #9aa3b2;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --shadow: 0 18px 50px -10px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 20px rgba(91, 140, 255, 0.3);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    
+    /* --- АНИМАЦИИ --- */
+    @keyframes float1 {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(5vw, 10vh) scale(1.2); }
+      66% { transform: translate(-5vw, 5vh) scale(0.8); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes float2 {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-10vw, -10vh) scale(1.1); }
+      66% { transform: translate(5vw, -15vh) scale(0.9); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 15px rgba(57, 217, 138, 0.4); }
+      50% { box-shadow: 0 0 25px rgba(57, 217, 138, 0.7); }
+      100% { box-shadow: 0 0 15px rgba(57, 217, 138, 0.4); }
+    }
+
+    /* --- БАЗОВЫЕ СТИЛИ И ФОН --- */
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background-color: var(--bg);
+      padding-bottom: calc(92px + env(safe-area-inset-bottom));
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Анимированные градиентные сферы на фоне */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      width: 60vw;
+      height: 60vw;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: -1;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    body::before {
+      top: -10%;
+      left: -10%;
+      background: radial-gradient(circle, rgba(91,140,255,0.4) 0%, transparent 70%);
+      animation: float1 15s ease-in-out infinite;
+    }
+    body::after {
+      bottom: 20%;
+      right: -10%;
+      background: radial-gradient(circle, rgba(189,92,255,0.3) 0%, transparent 70%);
+      animation: float2 18s ease-in-out infinite;
+    }
+
+    button, input, select { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+
+    .app-shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 16px 0;
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.6s ease-out backwards;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff, #aeb6c7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      border-radius: 999px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .chip:hover {
+      background: rgba(255,255,255,0.06);
+      transform: translateY(-2px);
+    }
+
+    .page { display: none; }
+    .page.active { 
+      display: block; 
+      animation: fadeUp 0.5s ease-out forwards;
+    }
+
+    .grid { display: grid; gap: 16px; }
+    .grid.two {
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: start;
+    }
+
+    /* GLASSMORPHISM CARD */
+    .card {
+      background: var(--surface);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .card:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 22px 60px -10px rgba(0,0,0,0.6);
+    }
+
+    .card-inner { padding: 22px; }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .section-subtitle {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .status-main { min-width: 0; }
+    .status-label {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0;
+      background: linear-gradient(135deg, #fff, #e0e5f0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .status-detail {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .status-stack {
+      display: grid;
+      gap: 10px;
+      margin-top: 20px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      min-width: 0;
+      transition: background 0.3s ease;
+    }
+    .stat:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .stat .k {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    .stat .v {
+      font-size: 16px;
+      font-weight: 600;
+      word-break: break-word;
+      color: #fff;
+    }
+
+    .config-select {
+      width: 100%;
+      margin-top: 2px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background-color: rgba(0,0,0,0.22);
+      color: var(--text);
+      padding: 12px 40px 12px 14px; /* space for custom arrow */
+      outline: none;
+      transition: all 0.25s ease;
+      font-weight: 500;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9' fill='none' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      background-clip: padding-box;
+      box-shadow: none;
+      cursor: pointer;
+    }
+    .config-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 6px rgba(91,140,255,0.08);
+    }
+    .config-select::-ms-expand { display: none; }
+    .config-select option { background: rgba(5,5,8,0.9); color: var(--text); }
+
+    /* custom-select removed (selection via config list) */
+
+    /* Анимированный свитчер */
+    .switch {
+      width: 60px;
+      height: 36px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      position: relative;
+      flex: 0 0 auto;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+      border: 1px solid rgba(255,255,255,0.05);
+      user-select: none;
+    }
+    .switch::after {
+      content: '';
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      top: 3px;
+      left: 3px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .switch.on {
+      background: linear-gradient(135deg, var(--success), #20a05f);
+      border-color: transparent;
+      animation: pulseGlow 2s infinite;
+    }
+    .switch.on::after { transform: translateX(24px); }
+    .switch:active::after { width: 34px; }
+    .switch.on:active::after { transform: translateX(18px); }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      color: var(--text);
+      outline: none;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    .input:focus {
+      border-color: var(--accent);
+      background: rgba(0,0,0,0.4);
+      box-shadow: 0 0 0 3px rgba(91,140,255,0.15);
+    }
+    .input::placeholder { color: rgba(255,255,255,0.3); }
+
+    /* Экспрессивные кнопки */
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 18px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.12);
+    }
+    .btn:active { transform: scale(0.96); }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      background-size: 200% auto;
+      box-shadow: var(--shadow-glow);
+    }
+    .btn-primary:hover {
+      background-position: right center;
+      box-shadow: 0 0 25px rgba(189, 92, 255, 0.4);
+    }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: var(--border-hover);
+    }
+    .btn-danger {
+      background: rgba(255,107,107,0.1);
+      color: #ff8e8e;
+      border: 1px solid rgba(255,107,107,0.2);
+    }
+    .btn-danger:hover {
+      background: rgba(255,107,107,0.2);
+      box-shadow: 0 0 15px rgba(255, 107, 107, 0.2);
+    }
+    .btn-mini {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border-radius: 12px;
+      flex: 0 0 auto;
+    }
+
+    /* toolbar specific sizing overrides */
+    .toolbar .btn-mini {
+      padding: 8px 14px;
+      min-width: 52px;
+      height: 44px;
+    }
+    .toolbar .btn {
+      min-width: 56px;
+    }
+
+    .meta-line {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(91,140,255,0.12);
+      border: 1px solid rgba(91,140,255,0.22);
+      color: #c7dcff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    #config-list { display: grid; gap: 12px; }
+
+    .config-empty {
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      border: 1px dashed rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.2);
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .config-item {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer; 
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .config-item:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,0.05);
+      border-color: var(--border-hover);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    .config-item.selected {
+      border-color: var(--accent);
+      background: linear-gradient(180deg, rgba(91,140,255,0.1), rgba(255,255,255,0.01));
+      box-shadow: inset 0 0 0 1px rgba(91,140,255,0.2), 0 8px 24px rgba(91,140,255,0.15);
+    }
+
+    .cfg-info {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .cfg-name {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cfg-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .cfg-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      align-self: center;
+    }
+
+    .log-panel { display: grid; gap: 12px; }
+    /* Logs: blurred panel and per-line blocks */
+    .logs-toolbar { display:flex; gap:8px; align-items:center; margin-bottom:8px }
+    .logs-body { background: rgba(18,20,24,0.6); border: 1px solid var(--border); border-radius: 10px; padding: 10px; min-height: 220px; max-height: 62vh; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .log-line { display:block; padding:6px 8px; margin:4px 0; border-radius:6px; font-size:12px; line-height:1.35; word-break:break-word; }
+    .log-line.info { background: rgba(255,255,255,0.02); color: var(--text); }
+    .log-line.warn { background: rgba(255,165,0,0.06); color: #ffd894; }
+    .log-line.error { background: rgba(255,50,50,0.06); color: #ffb3b3; }
+    
+    pre {
+      margin: 0;
+      min-height: 280px;
+      max-height: 62vh;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #000000;
+      color: #39d98a; /* Хакерский зеленый */
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      box-shadow: inset 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    /* GLASSMORPHISM В НИЖНЕЙ ПАНЕЛИ */
+    .tab-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+      background: rgba(5, 5, 8, 0.6);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      z-index: 100;
+    }
+    .tab-bar-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding: 6px 0;
+    }
+    .tab-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+    .tab-item:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .tab-item.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(91,140,255,0.2), rgba(189,92,255,0.2));
+      border-color: rgba(91,140,255,0.3);
+      box-shadow: inset 0 0 15px rgba(255,255,255,0.05);
+    }
+
+    .helper-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 840px) {
+      .grid.two { grid-template-columns: 1fr; }
+      .status-stack { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; }
+      .brand h1 { font-size: 28px; }
+      body::before { width: 100vw; height: 100vw; }
+      body::after { width: 120vw; height: 120vw; }
+    }
+
+    /* Контейнер для уведомлений */
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      min-width: 280px;
+      max-width: 350px;
+      padding: 16px;
+      background: rgba(25, 27, 35, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      color: #fff;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
+      cursor: pointer;
+      animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      transition: all 0.3s ease;
+    }
+
+    .toast:hover {
+      transform: scale(1.02);
+      border-color: var(--border-hover);
+    }
+
+    .toast.hide {
+      animation: toastOut 0.3s ease forwards;
+    }
+
+    /* Цветовые типы */
+    .toast-success { border-left: 4px solid var(--success); }
+    .toast-error { border-left: 4px solid var(--danger); }
+    .toast-info { border-left: 4px solid var(--accent); }
+
+    .toast-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .toast-content {
+      flex-grow: 1;
+    }
+
+    .toast-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .toast-message {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(100%) scale(0.9); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(100%); }
+    }
+
+    @media (max-width: 480px) {
+      #toast-container {
+        top: auto;
+        bottom: calc(100px + env(safe-area-inset-bottom));
+        right: 16px;
+        left: 16px;
+      }
+      .toast { max-width: none; }
+    }
+    /* Responsive add-panel and scroll improvements */
+    :root { --kbd: 0px; --vh: 1vh; }
+
+    .add-panel {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0,0,0,0.48);
+      z-index: 120;
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transition: opacity 180ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .add-panel.open {
+      opacity: 1;
+      pointer-events: auto;
+      visibility: visible;
+    }
+    .add-panel .add-panel-inner {
+      width: 100%;
+      max-width: 760px;
+      background: rgba(21,22,27,1); /* solid opaque modal background */
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      transform: translateY(-6px);
+      opacity: 0;
+      transition: transform 200ms cubic-bezier(0.2,0,0.2,1), opacity 180ms ease;
+      border: 1px solid rgba(255,255,255,0.04);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .add-panel.open .add-panel-inner {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .add-panel .add-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center; }
+    @media (max-width: 680px) { .add-panel .add-grid { grid-template-columns: 1fr; } .add-panel { padding: 12px; } .add-panel .add-panel-inner { padding: 14px; } }
+
+    .config-list-scroll {
+      overflow: auto;
+      max-height: calc(var(--vh, 1vh) * 100 - 260px);
+      padding-right: 6px;
+      padding-top: 12px; /* prevent first item from colliding with card head */
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 840px) { .config-list-scroll { max-height: calc(var(--vh, 1vh) * 100 - 340px); } }
+
+    .tab-bar { transition: transform 0.18s ease; transform: translateY(calc(var(--kbd, 0px) * -1)); }
+
+    /* Ensure focused inputs aren't hidden behind fixed footer on mobile */
+    .input:focus { scroll-margin-bottom: calc(92px + env(safe-area-inset-bottom)); }
+    /* Traffic charts */
+    .traffic-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .traffic-card { padding: 0; border-radius: 14px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); }
+    .traffic-card .card-inner { padding: 10px; }
+    .traffic-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+    .traffic-value { font-weight:800; color:var(--text); }
+    .chart-canvas { width:100%; height:180px; display:block; background: linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.05)); border-radius:10px; }
+  </style>
+</head>
+<body>
+  <div id="toast-container"></div>
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="brand">
+        <!-- header removed to free vertical space -->
+      </div>
+      <div class="chip" id="chip-runtime">Проверка состояния…</div>
+    </div>
+
+    <div id="tab-home" class="page active">
+      <div class="grid two">
+        <div class="card">
+          <div class="card-inner">
+            <div class="status-row">
+              <div class="status-main">
+                <div id="st-label" class="status-label">Загрузка…</div>
+                <div id="st-detail" class="status-detail">Проверка процесса и активного конфига</div>
+              </div>
+              <div id="main-switch" class="switch" role="button" aria-label="Переключить сервис"></div>
+            </div>
+
+                    
+
+            <!-- Traffic charts: upload (blue) and download (red) -->
+            <div class="traffic-charts">
+              <div class="traffic-card card">
+                <div class="card-inner">
+                  <div class="traffic-head">
+                    <div>
+                      <div class="section-title">Загрузка</div>
+                    </div>
+                    <div class="traffic-value" id="up-value">0 B/s</div>
+                  </div>
+                  <canvas id="chart-up" class="chart-canvas"></canvas>
+                </div>
+              </div>
+              
+              
+              <div class="traffic-card card">
+                <div class="card-inner">
+                  <div class="traffic-head">
+                    <div>
+                      <div class="section-title">Отдача</div>
+                    </div>
+                    <div class="traffic-value" id="down-value">0 B/s</div>
+                  </div>
+                  <canvas id="chart-down" class="chart-canvas"></canvas>
+                </div>
+              </div>
+
+              <div class="traffic-card card">
+                <div class="card-inner">
+                  <div class="traffic-head">
+                    <div>
+                      <div class="section-title">Соединения</div>
+                    </div>
+                    <div class="traffic-value" id="conn-value">0</div>
+                  </div>
+                  <canvas id="chart-conns" class="chart-canvas"></canvas>
+                </div>
+              </div>
+
+              <div class="traffic-card card">
+                <div class="card-inner">
+                  <div class="traffic-head">
+                    <div>
+                      <div class="section-title">Память</div>
+                    </div>
+                    <div class="traffic-value" id="mem-value">0 B</div>
+                  </div>
+                  <canvas id="chart-mem" class="chart-canvas"></canvas>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-logs" class="page">
+      <div class="card">
+        <div class="card-inner">
+          <div class="card-head">
+            <div>
+              <h3 class="section-title">Логи</h3>
+              <div class="section-subtitle">Поток логов sing-box (ClashAPI)</div>
+            </div>
+            <div class="toolbar">
+              <select id="log-level-select" class="config-select" style="min-width:120px">
+                <option value="debug">debug</option>
+                <option value="info" selected>info</option>
+                <option value="warn">warn</option>
+                <option value="error">error</option>
+              </select>
+              <button class="btn btn-ghost btn-mini" id="btn-clear-logs" title="Очистить">Очистить</button>
+            </div>
+          </div>
+          <div class="log-panel">
+            <div class="logs-toolbar">
+              <div style="flex:1;color:var(--muted);font-size:13px">Уровень: <strong id="logs-level-display">info</strong></div>
+              <input id="logs-search" class="input" type="search" placeholder="Поиск в логах" style="min-width:160px; max-width:40%;" />
+              <button id="btn-clear-search" class="btn btn-ghost btn-mini" title="Очистить поиск">✕</button>
+            </div>
+            <div class="logs-body" id="logs-body" aria-live="polite" aria-atomic="false">
+              <!-- lines will be rendered here using a recycled pool -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-config" class="page">
+      <div class="card">
+        <div class="card-inner">
+          <div class="card-head">
+            <div>
+              <div style="display:flex; align-items:center; gap:12px">
+                <span class="badge" id="cfg-summary">Конфигов: —</span>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button class="btn btn-primary btn-mini" id="btn-refresh-configs" type="button" aria-label="Обновить">↻</button>
+              <button class="btn btn-primary btn-mini" id="btn-open-add" type="button" title="Добавить конфиг">＋</button>
+            </div>
+          </div>
+
+          <!-- Add panel (togglable) -->
+          <!-- moved below card to overlay the whole page instead of being confined to the card -->
+
+          <!-- cfg-summary moved to card head -->
+
+          <div id="config-list" class="config-list-scroll"></div>
+        </div>
+      </div>
+      <!-- Add panel (togglable) placed at page level so it overlays the whole config page -->
+      <div id="add-panel" class="add-panel" aria-hidden="true">
+        <div class="add-panel-inner">
+          <div class="section-subtitle" style="margin-bottom:8px">Добавить из интернета — файл проверяется sing-box перед добавлением.</div>
+          <div class="grid add-grid">
+            <input class="input" type="text" id="new-cfg-name" placeholder="Название (например: MyServer)" />
+            <input class="input" type="url" id="new-cfg-url" placeholder="URL на .json файл" />
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="btn btn-primary" id="btn-download-config" type="button">Скачать и использовать</button>
+              <button class="btn btn-ghost" id="btn-cancel-add" type="button">Отмена</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-bar-inner">
+      <div class="tab-item active" data-tab="tab-home"><span>🏠</span><span>Статус</span></div>
+      <div class="tab-item" data-tab="tab-logs"><span>📝</span><span>Логи</span></div>
+      <div class="tab-item" data-tab="tab-config"><span>⚙️</span><span>Конфиги</span></div>
+    </div>
+  </div>
+
+  <script>
+    const MOD_PATH = "/data/adb/modules/singbox_ksu";
+    const BIN_PATH = `${MOD_PATH}/sing-box`;
+    const META_PATH = `${MOD_PATH}/.metadata.json`;
+
+    const state = {
+      activeConfig: localStorage.getItem('active_cfg') || 'config.json',
+      metadata: {},
+      configs: [],
+      sortAsc: true,
+      logOffset: 0,
+      logBuffer: '',
+      logInitialized: false,
+      logTail: 250,
+      logPollingId: null,
+      seenLogs: new Set(),
+      recentLogs: [],
+      logPollInterval: 500,
+      // logs runtime state
+      logsPoolSize: 300,
+      logsMaxLines: 2000,
+      logsPool: null,
+      logsWriteIndex: 0,
+      logsCount: 0,
+      logsWs: null,
+      logsAbortController: null,
+      // optional auth token for ws endpoints
+      token: localStorage.getItem('ksu_token') || '',
+      serviceRunning: false,
+      currentPid: ''
+    };
+
+    function getToken() {
+      // prefer explicit state.token, fallback to metadata.token or localStorage
+      return (state.token || state.metadata && state.metadata.token || localStorage.getItem('ksu_token') || '')
+    }
+
+    const els = {
+      chipRuntime: document.getElementById('chip-runtime'),
+      stLabel: document.getElementById('st-label'),
+      stDetail: document.getElementById('st-detail'),
+      statConfig: document.getElementById('stat-config'),
+      mainSwitch: document.getElementById('main-switch'),
+      configList: document.getElementById('config-list'),
+      cfgSummary: document.getElementById('cfg-summary'),
+      chartUp: document.getElementById('chart-up'),
+      chartDown: document.getElementById('chart-down'),
+      upValue: document.getElementById('up-value'),
+      downValue: document.getElementById('down-value'),
+      chartConns: document.getElementById('chart-conns'),
+      chartMem: document.getElementById('chart-mem'),
+      connValue: document.getElementById('conn-value'),
+      memValue: document.getElementById('mem-value'),
+      tabLogs: document.getElementById('tab-logs'),
+      logsBody: document.getElementById('logs-body'),
+      btnClearLogs: document.getElementById('btn-clear-logs'),
+      logsSearch: document.getElementById('logs-search'),
+      btnClearSearch: document.getElementById('btn-clear-search'),
+      logLevelSelect: document.getElementById('log-level-select'),
+      btnRefreshConfigs: document.getElementById('btn-refresh-configs'),
+      btnDownload: document.getElementById('btn-download-config')
+    };
+
+    function shellQuote(value) {
+      return `'${String(value).replace(/'/g, `'"'"'`)}'`;
+    }
+
+    async function exec(cmd) {
+      try {
+        return await ksu.exec(cmd);
+      } catch (e) {
+        return 'error';
+      }
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function decodeBase64Utf8(b64) {
+      const clean = String(b64 || '').replace(/\s+/g, '');
+      if (!clean) return '';
+      try {
+        const bin = atob(clean);
+        const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+        return new TextDecoder('utf-8').decode(bytes);
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function encodeTextToShellOneliner(text) {
+      return String(text || '')
+        .replace(/\\/g, '\\\\')
+        .replace(/`/g, '\\`')
+        .replace(/\$/g, '\\$');
+    }
+
+    /* UI helpers: date / duration formatting */
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function formatDuration(sec) {
+      sec = Math.max(0, Math.floor(Number(sec) || 0));
+      const days = Math.floor(sec / 86400);
+      sec -= days * 86400;
+      const hours = Math.floor(sec / 3600);
+      sec -= hours * 3600;
+      const minutes = Math.floor(sec / 60);
+      const seconds = sec - minutes * 60;
+      if (days) return `${days}д ${hours}ч`;
+      if (hours) return `${hours}ч ${minutes}м`;
+      if (minutes) return `${minutes}м ${seconds}с`;
+      return `${seconds}с`;
+    }
+
+    function relativeTimeFromDate(d) {
+      const s = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (s < 60) return `${s}с назад`;
+      const m = Math.floor(s / 60);
+      if (m < 60) return `${m}м назад`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}ч назад`;
+      const days = Math.floor(h / 24);
+      return `${days}д назад`;
+    }
+
+    function formatUpdated(raw) {
+      if (!raw || raw === '—') return '—';
+      // try to parse common stat output like "YYYY-MM-DD HH:MM:SS"
+      let iso = String(raw).trim();
+      iso = iso.replace(/\s+/g, ' ');
+      // keep only date+time part
+      iso = iso.split('+')[0].split('- ')[0];
+      iso = iso.replace(' ', 'T');
+      let d = new Date(iso);
+      if (isNaN(d.getTime())) {
+        // fallback: replace space with T and try
+        d = new Date(String(raw).replace(' ', 'T'));
+      }
+      if (isNaN(d.getTime())) return String(raw);
+      const local = `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      const rel = relativeTimeFromDate(d);
+      return `${local} · ${rel}`;
+    }
+
+    function displayName(file) {
+      if (!file) return '';
+      return String(file).replace(/\.json$/i, '');
+    }
+
+    async function loadMetadata() {
+      const res = await exec(`[ -f ${shellQuote(META_PATH)} ] && cat ${shellQuote(META_PATH)} || echo '{}'`);
+      try {
+        state.metadata = JSON.parse(res || '{}') || {};
+      } catch (e) {
+        state.metadata = {};
+      }
+    }
+
+    async function saveMetadata() {
+      const json = JSON.stringify(state.metadata);
+      const cmd = `cat > ${shellQuote(META_PATH)} <<'EOF'\n${json}\nEOF`;
+      await exec(cmd);
+    }
+
+    function setTab(tabId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`.tab-item[data-tab="${tabId}"]`).classList.add('active');
+      
+      // Чтобы вторая страница всегда знала об изменениях на первой:
+      if (tabId === 'tab-config') {
+        renderConfigList();
+      }
+
+      // start/stop logs polling when switching to/from logs tab
+      if (tabId === 'tab-logs') {
+        startLogsSocket();
+      } else {
+        stopLogsSocket();
+      }
+    }
+    function updateUiSummary() {
+      els.cfgSummary.textContent = `Конфигов: ${state.configs.length}`;
+    }
+
+    // selection handled via config list clicks
+
+    function normalizeFileList(raw) {
+      return String(raw || '')
+        .split(';')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(f => f.endsWith('.json') && f !== '.metadata.json');
+    }
+
+    async function scanConfigs() {
+      const out = await exec(
+        `sh -lc 'first=1; for f in ${shellQuote(MOD_PATH)}/*.json; do [ -f "$f" ] || continue; b=$(basename "$f"); [ "$b" = ".metadata.json" ] && continue; if [ $first -eq 0 ]; then printf ";"; fi; printf "%s" "$b"; first=0; done; printf "\n"'`
+      );
+
+      if (out === 'error') {
+        state.configs = [];
+        renderConfigList(true);
+        updateUiSummary();
+        return;
+      }
+
+      const files = normalizeFileList(out);
+      const records = [];
+
+      for (const file of files) {
+        const statOut = await exec(`stat -c '%y|%s' ${shellQuote(`${MOD_PATH}/${file}`)} 2>/dev/null || echo '—|0'`);
+        const [mtimeRaw, sizeRaw] = String(statOut || '—|0').trim().split('|');
+        const updated = (mtimeRaw || '—').split('.')[0];
+        const size = Number(sizeRaw || 0);
+        records.push({
+          file,
+          updated,
+          size,
+          hasUrl: Boolean(state.metadata[file]),
+          isSelected: file === state.activeConfig,
+        });
+      }
+
+      records.sort((a, b) => {
+        if (a.isSelected !== b.isSelected) return a.isSelected ? -1 : 1;
+        const an = a.file.toLowerCase();
+        const bn = b.file.toLowerCase();
+        return state.sortAsc ? an.localeCompare(bn) : bn.localeCompare(an);
+      });
+
+      state.configs = records;
+
+      if (state.configs.length && !state.configs.some(cfg => cfg.file === state.activeConfig)) {
+        const fallback = state.configs[0].file;
+        state.activeConfig = fallback;
+        localStorage.setItem('active_cfg', fallback);
+      }
+
+      renderConfigList();
+      updateUiSummary();
+    }
+    
+
+    function createActionButton(label, title, className, handler) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = className;
+      btn.textContent = label;
+      btn.title = title;
+      btn.addEventListener('click', handler);
+      return btn;
+    }
+
+    
+
+    function renderConfigList(forceEmpty = false) {
+    const list = els.configList;
+    if (!list) return; // Защита, если элемент еще не найден
+    
+    list.innerHTML = '';
+
+    const items = state.configs;
+    
+    // 1. Проверка на пустой список
+    if (forceEmpty || !items || !items.length) {
+        const box = document.createElement('div');
+        box.className = 'config-empty';
+        box.textContent = 'Список конфигураций пуст';
+        list.appendChild(box);
+        return;
+    }
+
+    // 2. Отрисовка элементов
+    for (const cfg of items) {
+        const item = document.createElement('div');
+        const isSelected = cfg.file === state.activeConfig;
+        
+        // Устанавливаем классы (включая класс для подсветки выбранного)
+        item.className = `config-item${isSelected ? ' selected' : ''}`;
+        
+        // 3. Логика клика по всей карточке
+        item.onclick = (e) => {
+        // Если клик попал по кнопкам (удаление/обновление), прерываем выбор конфига
+        if (e.target.closest('.cfg-actions')) return;
+        selectConfig(cfg.file);
+        };
+
+        // 4. Формирование внутреннего HTML (с датой обновления)
+        item.innerHTML = `
+        <div class="cfg-info">
+          <div class="cfg-name">
+          ${displayName(cfg.file)}${isSelected ? ' <span class="active-badge">· активен</span>' : ''}
+          </div>
+            <div class="cfg-meta">
+            Обновлён: <span class="cfg-updated" title="${String(cfg.updated || '')}">${formatUpdated(cfg.updated || '—')}</span> · 
+            Размер: ${cfg.size || 0} B 
+            ${cfg.hasUrl ? ' · <span style="color:var(--accent)">есть ссылка</span>' : ''}
+            </div>
+        </div>
+        <div class="cfg-actions">
+          ${cfg.hasUrl ? `<button class="btn btn-mini btn-primary" data-action="update" title="Обновить">↻</button>` : ''}
+          <button class="btn btn-mini btn-danger" data-action="delete" title="Удалить">✕</button>
+        </div>
+        `;
+
+        // 5. Привязка событий к кнопкам действий
+        const btnUpdate = item.querySelector('[data-action="update"]');
+        const btnDel = item.querySelector('[data-action="delete"]');
+        
+        if (btnUpdate) {
+        btnUpdate.onclick = (e) => {
+            e.stopPropagation(); // На всякий случай дублируем защиту от всплытия
+            updateConfig(cfg.file);
+        };
+        }
+        
+        if (btnDel) {
+        btnDel.onclick = (e) => {
+            e.stopPropagation();
+            deleteConfig(cfg.file);
+        };
+        }
+
+        list.appendChild(item);
+    }
+
+    // Обновляем общую информацию (счетчик и т.д.), если такая функция есть
+    if (typeof updateUiSummary === 'function') {
+        updateUiSummary();
+    }
+    }
+
+    async function updateStatus() {
+      const pidRaw = String(await exec('pidof sing-box')).trim();
+      const pid = (pidRaw || '').split(/\s+/)[0] || '';
+      const running = Boolean(pid && pid !== 'error');
+      state.serviceRunning = running;
+      state.currentPid = running ? pid : '';
+
+      // Uptime: prefer stored metadata start time, fallback to ps etimes
+      let uptimeStr = '';
+      if (running) {
+        try {
+          const svcStart = state.metadata && (state.metadata.__service_start || state.metadata._service_start);
+          if (svcStart) {
+            const startMs = Number(svcStart);
+            if (!isNaN(startMs) && startMs > 0) {
+              const elapsed = Math.floor((Date.now() - startMs) / 1000);
+              uptimeStr = formatDuration(elapsed);
+            }
+          }
+          if (!uptimeStr) {
+            const out = String(await exec(`ps -p ${shellQuote(pid)} -o etimes=`)).trim();
+            const first = (out || '').split(/\n/).map(s => s.trim()).filter(Boolean)[0];
+            uptimeStr = first ? formatDuration(Number(first)) : '';
+          }
+        } catch (e) {
+          uptimeStr = '';
+        }
+      }
+
+      els.mainSwitch.classList.toggle('on', running);
+      els.chipRuntime.textContent = running ? `Процесс активен · PID ${pid}${uptimeStr ? ' · Аптайм: ' + uptimeStr : ''}` : 'Процесс остановлен';
+      els.stLabel.textContent = running ? 'Работает' : 'Выключен';
+      els.stLabel.style.color = running ? 'var(--success)' : 'var(--text)';
+      els.stDetail.textContent = running
+        ? `Активный конфиг: ${state.activeConfig ? displayName(state.activeConfig) : 'не выбран'}`
+        : 'Сервис не активен';
+
+      updateUiSummary();
+    }
+
+    // --- Логи: WebSocket + DOM-pool динамическая отрисовка ---
+    function ensureLogsPool() {
+      console.debug('ensureLogsPool()', { logsPool: !!state.logsPool });
+      if (state.logsPool) return;
+      const body = document.getElementById('logs-body');
+      if (!body) { console.debug('ensureLogsPool: no logs-body element'); return; }
+      const pool = [];
+      for (let i=0;i<state.logsPoolSize;i++) {
+        const d = document.createElement('div');
+        d.className = 'log-line info';
+        d.style.display = 'none';
+        pool.push(d);
+        body.appendChild(d);
+      }
+      state.logsPool = pool;
+      state.logsWriteIndex = 0;
+      state.logsCount = 0;
+      console.debug('ensureLogsPool: created pool size', pool.length);
+    }
+
+    function pushLogLine(level, text) {
+      ensureLogsPool();
+      if (!state.logsPool) { console.debug('pushLogLine: no pool'); return; }
+      const idx = state.logsWriteIndex % state.logsPool.length;
+      const node = state.logsPool[idx];
+      node.className = 'log-line ' + (level || 'info');
+      const now = new Date();
+      const ts = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const fullText = `[${ts}] ${String(text)}`;
+      node.textContent = fullText;
+      node.dataset.text = String(text) || '';
+      // apply current filter
+      const q = (state.logsFilter || '').toLowerCase();
+      if (q && !((node.dataset.text || '').toLowerCase().includes(q))) {
+        node.style.display = 'none';
+      } else {
+        node.style.display = 'block';
+      }
+      // move element to end of container to preserve visual order
+      const body = document.getElementById('logs-body');
+      if (body && node.parentElement === body) {
+        body.appendChild(node);
+      }
+      console.debug('pushLogLine', { idx, level, textSnippet: String(text).slice(0,120) });
+      state.logsWriteIndex++;
+      state.logsCount = Math.min(state.logsCount + 1, state.logsMaxLines);
+      // trim visible elements beyond pool size by hiding older ones
+      if (state.logsWriteIndex > state.logsPool.length) {
+        const hideIdx = state.logsWriteIndex % state.logsPool.length;
+        const hideNode = state.logsPool[hideIdx];
+        if (hideNode) hideNode.style.display = 'none';
+      }
+      // autoscroll
+      try { body.scrollTop = body.scrollHeight; } catch (e) {}
+    }
+
+    function startLogsSocket() {
+      console.debug('startLogsSocket called');
+      if (state.logsWs || state.logsAbortController) { console.debug('startLogsSocket: already running'); return; }
+      ensureLogsPool();
+      const levelSelect = document.getElementById('log-level-select');
+      const levelDisplay = document.getElementById('logs-level-display');
+      const level = (levelSelect && levelSelect.value) || 'info';
+      if (levelDisplay) levelDisplay.textContent = level;
+      try {
+        const token = getToken() || '';
+        const url = `ws://127.0.0.1:9090/logs?token=${encodeURIComponent(token)}&level=${encodeURIComponent(level)}`;
+        console.debug('startLogsSocket: connecting', url);
+        state.logsWs = new WebSocket(url);
+        state.logsWs.onopen = () => { console.debug('logs ws open'); };
+        state.logsWs.onmessage = (ev) => {
+          // incoming messages may be raw JSON lines; try parse and extract payload
+          let data = ev.data;
+          console.debug('logs ws message raw', String(data).slice(0,200));
+          if (!data) return;
+          // some servers send multiple lines; split
+          const parts = String(data).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+          for (const p of parts) {
+            try {
+              const o = JSON.parse(p);
+              if (!o || !o.payload) continue; // skip if not parsable as expected
+              const lvl = String(o.type || 'info').toLowerCase();
+              pushLogLine(lvl, o.payload);
+            } catch (e) {
+              console.debug('logs ws parse failed, skipping', e && e.message);
+              continue;
+            }
+          }
+        };
+        state.logsWs.onclose = (ev) => { console.debug('logs ws closed', ev); state.logsWs = null; setTimeout(startLogsSocket, 1000); };
+        state.logsWs.onerror = (ev) => { console.debug('logs ws error', ev); };
+      } catch (e) {
+        console.debug('startLogsSocket exception', e && e.message);
+        state.logsWs = null;
+      }
+    }
+
+    function applyLogFilter() {
+      const q = (els.logsSearch && els.logsSearch.value || '').toLowerCase();
+      state.logsFilter = q;
+      if (!state.logsPool || !state.logsPool.length) return;
+      for (const n of state.logsPool) {
+        const txt = (n.dataset.text || '').toLowerCase();
+        if (!q || txt.includes(q)) {
+          // show only if it has content
+          n.style.display = txt ? 'block' : 'none';
+        } else {
+          n.style.display = 'none';
+        }
+      }
+      // ensure scroll to bottom if no active filter
+      try { if (!q) { const b = document.getElementById('logs-body'); if (b) b.scrollTop = b.scrollHeight; } } catch (e) {}
+    }
+
+    function stopLogsSocket() {
+      try {
+        if (state.logsWs) {
+          try { state.logsWs.close(); } catch (e) {}
+          state.logsWs = null;
+        }
+      } catch (e) {}
+    }
+
+    // --- Traffic: WebSocket + simple canvas sparklines ---
+    const traffic = {
+      ws: null,
+      upHistory: [],
+      downHistory: [],
+      maxPoints: 60,
+      drawIntervalId: null,
+      reconnectTimeout: 1000,
+      connHistory: [],
+      memHistory: [],
+      connPollId: null,
+    };
+
+    function resizeCanvasToDisplaySize(canvas) {
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.floor(canvas.clientWidth * dpr);
+      const height = Math.floor(canvas.clientHeight * dpr);
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+    }
+
+    function drawSparkline(canvas, data, color, maxOverride) {
+      if (!canvas) return;
+      resizeCanvasToDisplaySize(canvas);
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width; const h = canvas.height;
+      ctx.clearRect(0,0,w,h);
+      if (!data || data.length === 0) return;
+      const rawMax = Math.max(...data, 1);
+      const max = (typeof maxOverride === 'number' && !isNaN(maxOverride) && maxOverride > 0) ? maxOverride : rawMax;
+      ctx.beginPath();
+      ctx.lineWidth = Math.max(2, Math.floor(w / 200));
+      ctx.strokeStyle = color;
+      for (let i=0;i<data.length;i++) {
+        const x = Math.floor((i/(data.length-1))*(w-4)) + 2;
+        const y = Math.floor(h - (data[i]/max)*(h-6) - 3);
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      // area fill
+      ctx.lineTo(w-2, h-2);
+      ctx.lineTo(2, h-2);
+      ctx.closePath();
+      ctx.fillStyle = color + '22';
+      ctx.fill();
+    }
+
+    function formatBytesPerSec(n) {
+      n = Number(n) || 0;
+      if (n >= 1e9) return (n/1e9).toFixed(2)+' GB/s';
+      if (n >= 1e6) return (n/1e6).toFixed(2)+' MB/s';
+      if (n >= 1e3) return (n/1e3).toFixed(1)+' KB/s';
+      return n+' B/s';
+    }
+
+    function formatBytes(n) {
+      n = Number(n) || 0;
+      if (n >= 1e9) return (n/1e9).toFixed(2)+' GB';
+      if (n >= 1e6) return (n/1e6).toFixed(2)+' MB';
+      if (n >= 1e3) return (n/1e3).toFixed(1)+' KB';
+      return n+' B';
+    }
+
+    function handleTrafficMessage(obj) {
+      const up = Number(obj.up) || 0;
+      const down = Number(obj.down) || 0;
+      // push history
+      traffic.upHistory.push(up);
+      traffic.downHistory.push(down);
+      if (traffic.upHistory.length > traffic.maxPoints) traffic.upHistory.shift();
+      if (traffic.downHistory.length > traffic.maxPoints) traffic.downHistory.shift();
+      // update numeric display
+      if (els.upValue) els.upValue.textContent = formatBytesPerSec(up);
+      if (els.downValue) els.downValue.textContent = formatBytesPerSec(down);
+    }
+
+    function connectTrafficSocket() {
+      try {
+        if (traffic.ws) {
+          try { traffic.ws.close(); } catch (e) {}
+          traffic.ws = null;
+        }
+        const token = getToken() || '';
+        const url = `ws://127.0.0.1:9090/traffic?token=${encodeURIComponent(token)}`;
+        console.debug('connectTrafficSocket connecting', url);
+        traffic.ws = new WebSocket(url);
+        traffic.ws.onopen = () => { console.debug('traffic ws open'); traffic.reconnectTimeout = 1000; };
+        traffic.ws.onmessage = (ev) => {
+          try {
+            const obj = JSON.parse(ev.data);
+            handleTrafficMessage(obj);
+          } catch (e) { console.debug('traffic ws parse error', e && e.message); }
+        };
+        traffic.ws.onclose = (ev) => {
+          console.debug('traffic ws closed', ev);
+          traffic.ws = null;
+          setTimeout(connectTrafficSocket, traffic.reconnectTimeout);
+          traffic.reconnectTimeout = Math.min(30000, traffic.reconnectTimeout * 1.5);
+        };
+        traffic.ws.onerror = (ev) => { console.debug('traffic ws error', ev); };
+      } catch (e) {
+        console.debug('connectTrafficSocket exception', e && e.message);
+        setTimeout(connectTrafficSocket, 2000);
+      }
+    }
+
+    function startTrafficDrawing() {
+      if (traffic.drawIntervalId) return;
+      traffic.drawIntervalId = setInterval(() => {
+        drawSparkline(els.chartUp, traffic.upHistory.map(v=>v), '#5b8cff');
+        drawSparkline(els.chartDown, traffic.downHistory.map(v=>v), '#ff6b6b');
+        // connections: fixed range 0..100
+        drawSparkline(els.chartConns, traffic.connHistory.map(v=>v), '#39d98a', 100);
+        // memory: fixed range 0..50 MB
+        drawSparkline(els.chartMem, traffic.memHistory.map(v=>v), '#bd5cff', 50 * 1024 * 1024);
+      }, 1000);
+    }
+
+    function stopTrafficDrawing() {
+      if (!traffic.drawIntervalId) return;
+      clearInterval(traffic.drawIntervalId);
+      traffic.drawIntervalId = null;
+    }
+
+    function initTrafficCharts() {
+      // initialize empty arrays
+      traffic.upHistory = [];
+      traffic.downHistory = [];
+      traffic.connHistory = [];
+      traffic.memHistory = [];
+      // attempt websocket connect
+      connectTrafficSocket();
+      startTrafficDrawing();
+      // resize on window resize
+      window.addEventListener('resize', () => {
+        drawSparkline(els.chartUp, traffic.upHistory, '#5b8cff');
+        drawSparkline(els.chartDown, traffic.downHistory, '#ff6b6b');
+        drawSparkline(els.chartConns, traffic.connHistory, '#39d98a');
+        drawSparkline(els.chartMem, traffic.memHistory, '#bd5cff');
+      });
+    }
+
+    // Poll /connections endpoint every 1s and update conn/mem histories
+    async function fetchConnections() {
+      try {
+        const res = await fetch('http://127.0.0.1:9090/connections');
+        if (!res.ok) return;
+        const j = await res.json();
+        const conns = Array.isArray(j.connections) ? j.connections.length : 0;
+        const mem = Number(j.memory) || 0;
+        traffic.connHistory.push(conns);
+        traffic.memHistory.push(mem);
+        if (traffic.connHistory.length > traffic.maxPoints) traffic.connHistory.shift();
+        if (traffic.memHistory.length > traffic.maxPoints) traffic.memHistory.shift();
+        if (els.connValue) els.connValue.textContent = String(conns);
+        if (els.memValue) els.memValue.textContent = formatBytes(mem);
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    function startConnectionsPolling() {
+      if (traffic.connPollId) return;
+      fetchConnections();
+      traffic.connPollId = setInterval(fetchConnections, 1000);
+    }
+
+    function stopLogPolling() {
+      if (!state.logPollingId) return;
+      clearInterval(state.logPollingId);
+      state.logPollingId = null;
+    }
+
+    async function selectConfig(file) {
+      if (!file || state.activeConfig === file) return;
+
+      const wasRunning = state.serviceRunning;
+      state.activeConfig = file;
+      localStorage.setItem('active_cfg', file);
+
+      // Обновляем визуальное состояние на обеих вкладках сразу
+      renderConfigList();
+      // try to bring the selected item into view (helpful on mobile)
+      try {
+        const sel = document.querySelector('.config-item.selected');
+        if (sel && sel.scrollIntoView) setTimeout(() => sel.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+      } catch (e) {}
+      await updateStatus();
+
+      // Если сервис работал — перезапускаем с новым конфигом
+      if (wasRunning) {
+        await exec('pkill -9 sing-box');
+        await wait(450);
+        await startService();
+      }
+    }
+
+    async function startService() {
+      if (!state.activeConfig) {
+        Toast.info("Сначала выберите файл конфигурации <3");
+        return;
+      }
+
+      await exec(`chmod +x ${shellQuote(BIN_PATH)} 2>/dev/null || true`);
+
+      const cmd = `cd ${shellQuote(MOD_PATH)} && nohup ${shellQuote(BIN_PATH)} run -c ${shellQuote(state.activeConfig)} >> /dev/null 2>&1 &`;
+      await exec(cmd);
+      await wait(500);
+      await updateStatus();
+      // Persist start time only if service actually started
+      try {
+        if (state.serviceRunning) {
+          state.metadata.__service_start = Date.now();
+          await saveMetadata();
+        }
+      } catch (e) {}
+    }
+
+    async function stopService() {
+      await exec('pkill -9 sing-box 2>/dev/null || true');
+      await wait(350);
+      // Remove persisted start time from metadata
+      try {
+        if (state.metadata && (state.metadata.__service_start || state.metadata._service_start)) {
+          delete state.metadata.__service_start;
+          delete state.metadata._service_start;
+          await saveMetadata();
+        }
+      } catch (e) {}
+      await updateStatus();
+    }
+
+    async function toggleService(forceStart = false) {
+      const pid = String(await exec('pidof sing-box')).trim();
+      const running = Boolean(pid && pid !== 'error');
+      if (running && !forceStart) {
+        await stopService();
+      } else {
+        await startService();
+      }
+    }
+
+    async function downloadConfig(targetFile = null, targetUrl = null) {
+      const url = (targetUrl || document.getElementById('new-cfg-url').value || '').trim();
+      let name = (targetFile || document.getElementById('new-cfg-name').value || '').trim();
+
+      if (!url) {
+        Toast.info("Сначала вставьте ссылку")
+        return;
+      }
+
+      if (!name) name = `remote_${Date.now().toString().slice(-6)}`;
+      if (!name.endsWith('.json')) name += '.json';
+
+      const temp = `${MOD_PATH}/.tmp_download.json`;
+      await exec(`busybox wget -q --no-check-certificate -O ${shellQuote(temp)} ${shellQuote(url)}`);
+
+      const check = await exec(`${shellQuote(BIN_PATH)} check -c ${shellQuote(temp)} >/dev/null 2>&1 && echo ok || echo fail`);
+      if (!String(check).includes('ok')) {
+        Toast.error("Ошибка валидации", "Конфиг не прошёл проверку sing-box:с");
+        await exec(`rm -f ${shellQuote(temp)}`);
+        return;
+      }
+
+      await exec(`mv -f ${shellQuote(temp)} ${shellQuote(`${MOD_PATH}/${name}`)}`);
+      state.metadata[name] = url;
+      await saveMetadata();
+      await scanConfigs();
+      await selectConfig(name);
+      // close the add panel after successful add
+      try { closeAddPanel(); } catch (e) {}
+      Toast.success("Ура!", "Конфиг добавлен и активирован, котик");
+    }
+
+    async function updateConfig(file) {
+      const url = state.metadata[file];
+      if (!url) return;
+      await downloadConfig(file, url);
+    }
+
+    async function deleteConfig(file) {
+      if (!file) return;
+      if (!confirm(`Точно удалить ${file}?`)) return;
+
+      await exec(`rm -f ${shellQuote(`${MOD_PATH}/${file}`)}`);
+      delete state.metadata[file];
+      await saveMetadata();
+
+      if (state.activeConfig === file) {
+        state.activeConfig = '';
+        localStorage.removeItem('active_cfg');
+        await stopService();
+      }
+
+      await scanConfigs();
+      await updateStatus();
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('.tab-item').forEach(el => {
+        el.addEventListener('click', () => setTab(el.dataset.tab));
+      });
+
+      els.mainSwitch.addEventListener('click', () => toggleService());
+      
+      els.btnDownload.addEventListener('click', () => downloadConfig());
+      els.btnRefreshConfigs.addEventListener('click', () => scanConfigs());
+
+      // Logs controls
+      if (els.btnClearLogs) els.btnClearLogs.addEventListener('click', () => {
+        // clear pool nodes
+        if (state.logsPool && state.logsPool.length) {
+          for (const n of state.logsPool) { n.style.display = 'none'; n.textContent = ''; }
+        } else {
+          const b = document.getElementById('logs-body'); if (b) b.innerHTML = '';
+        }
+        state.seenLogs.clear(); state.recentLogs = [];
+        state.logsWriteIndex = 0; state.logsCount = 0;
+      });
+      if (els.logsSearch) {
+        els.logsSearch.addEventListener('input', () => applyLogFilter());
+      }
+      if (els.btnClearSearch) {
+        els.btnClearSearch.addEventListener('click', () => { if (els.logsSearch) { els.logsSearch.value = ''; applyLogFilter(); } });
+      }
+      if (els.logLevelSelect) els.logLevelSelect.addEventListener('change', () => {
+        // reset seen logs so new level shows up immediately
+        state.seenLogs.clear(); state.recentLogs = [];
+        // restart websocket to apply new level
+        stopLogsSocket();
+        if (document.getElementById('tab-logs').classList.contains('active')) startLogsSocket();
+      });
+
+      // Add-panel controls (open/cancel) and input helpers
+      const btnOpenAdd = document.getElementById('btn-open-add');
+      const btnCancelAdd = document.getElementById('btn-cancel-add');
+      const inpName = document.getElementById('new-cfg-name');
+      const inpUrl = document.getElementById('new-cfg-url');
+
+      if (btnOpenAdd) btnOpenAdd.addEventListener('click', toggleAddPanel);
+      if (btnCancelAdd) btnCancelAdd.addEventListener('click', closeAddPanel);
+
+      // Allow Enter to submit from either input
+      if (inpUrl) inpUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') downloadConfig(); });
+      if (inpName) inpName.addEventListener('keydown', (e) => { if (e.key === 'Enter') downloadConfig(); });
+
+      // On focus, try to scroll input into view (useful when keyboard appears)
+      [inpName, inpUrl].forEach(i => {
+        if (!i) return;
+        i.addEventListener('focus', (ev) => {
+          setTimeout(() => {
+            try { ev.target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+          }, 220);
+        });
+      });
+    }
+
+    // Toggleable add panel helpers
+    function openAddPanel() {
+      const p = document.getElementById('add-panel');
+      if (!p) return;
+      if (p.classList.contains('open')) return;
+
+      p.classList.add('open');
+      p.setAttribute('aria-hidden', 'false');
+      // prevent background scroll while modal open
+      try { document.body.style.overflow = 'hidden'; } catch (e) {}
+
+      // close when clicking backdrop (only if click target is overlay itself)
+      const overlayClick = (ev) => { if (ev.target === p) closeAddPanel(); };
+      const escHandler = (ev) => { if (ev.key === 'Escape') closeAddPanel(); };
+      p.__overlayClick = overlayClick;
+      p.__escHandler = escHandler;
+      try { p.addEventListener('click', overlayClick); } catch (e) {}
+      try { document.addEventListener('keydown', escHandler); } catch (e) {}
+
+      const u = document.getElementById('new-cfg-url');
+      if (u) {
+        // focus after animation to avoid viewport jank on mobile
+        setTimeout(() => { try { u.focus(); } catch (e) {} }, 240);
+      }
+    }
+
+    function closeAddPanel() {
+      const p = document.getElementById('add-panel');
+      if (!p || !p.classList.contains('open')) return;
+
+      const u = document.getElementById('new-cfg-url');
+      if (u && document.activeElement === u) try { u.blur(); } catch (e) {}
+
+      p.classList.remove('open');
+      p.setAttribute('aria-hidden', 'true');
+      try { document.body.style.overflow = ''; } catch (e) {}
+
+      // remove listeners
+      try { if (p.__overlayClick) { p.removeEventListener('click', p.__overlayClick); delete p.__overlayClick; } } catch (e) {}
+      try { if (p.__escHandler) { document.removeEventListener('keydown', p.__escHandler); delete p.__escHandler; } } catch (e) {}
+    }
+
+    function toggleAddPanel() {
+      const p = document.getElementById('add-panel');
+      if (!p) return;
+      if (p.classList.contains('open')) closeAddPanel(); else openAddPanel();
+    }
+
+    // Viewport / keyboard helpers: expose --vh and --kbd for CSS to adapt on mobile
+    function refreshViewportVars() {
+      const vv = window.visualViewport;
+      const viewportHeight = (vv && vv.height) ? vv.height : window.innerHeight;
+      const k = Math.max(0, window.innerHeight - viewportHeight);
+      document.documentElement.style.setProperty('--vh', `${viewportHeight * 0.01}px`);
+      document.documentElement.style.setProperty('--kbd', `${k}px`);
+    }
+
+    window.addEventListener('resize', refreshViewportVars);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', refreshViewportVars);
+      window.visualViewport.addEventListener('scroll', refreshViewportVars);
+    }
+    // initialize once
+    refreshViewportVars();
+
+    async function init() {
+      bindEvents();
+      // custom select removed — nothing to initialize here
+      await loadMetadata();
+      await scanConfigs();
+      await updateStatus();
+
+      // start traffic charts
+      try { initTrafficCharts(); } catch (e) {}
+      try { startConnectionsPolling(); } catch (e) {}
+
+      // Update status every second to keep uptime responsive
+      setInterval(updateStatus, 1000);
+      setInterval(() => {
+        if (document.getElementById('tab-config').classList.contains('active')) {
+          scanConfigs();
+        }
+      }, 15000);
+    }
+
+    const Toast = {
+        init() {
+            this.container = document.getElementById('toast-container');
+        },
+
+        show(title, message, type = 'info', duration = 4000) {
+            if (!this.container) this.init();
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            // Иконки (можно заменить на свои SVG или эмодзи)
+            const icons = {
+                success: '✅',
+                error: '❌',
+                info: '✨'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+
+            // Удаление по клику
+            toast.onclick = () => this.remove(toast);
+
+            this.container.appendChild(toast);
+
+            // Автоматическое удаление
+            setTimeout(() => this.remove(toast), duration);
+        },
+
+        remove(toast) {
+            toast.classList.add('hide');
+            toast.onanimationend = () => toast.remove();
+        },
+
+        // Быстрые методы
+        success(msg, title = 'Успешно') { this.show(title, msg, 'success'); },
+        error(msg, title = 'Ошибка') { this.show(title, msg, 'error'); },
+        info(msg, title = 'Инфо') { this.show(title, msg, 'info'); }
+    };
+
+    init();
+  </script>
+</body>
+</html>
