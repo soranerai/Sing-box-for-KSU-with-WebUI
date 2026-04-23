@@ -1,4 +1,4 @@
-***v1.0.2 – Version Changes:***
+***v1.0.3 – Version Changes:***
 
--> bumped sing-box version to 1.14.0-alpha.17
--> added cache-clear button
+-> fixed auto-update daemon (it was missing in the release package)
+-> restored basic functionality
