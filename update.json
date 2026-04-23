@@ -1,5 +1,6 @@
 {
-    "version": "v1.0.1",
-    "versionCode": 101,
-    "zipUrl": "https://raw.githubusercontent.com/soranerai/Sing-box-for-KSU-with-WebUI/refs/heads/main/release.zip"
+    "version": "v1.0.2",
+    "versionCode": 102,
+    "zipUrl": "https://raw.githubusercontent.com/soranerai/Sing-box-for-KSU-with-WebUI/refs/heads/main/release.zip",
+    "changelog": "https://raw.githubusercontent.com/soranerai/Sing-box-for-KSU-with-WebUI/refs/heads/main/changelog.md"
 }

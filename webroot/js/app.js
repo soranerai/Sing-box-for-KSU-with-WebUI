@@ -56,7 +56,8 @@ const els = {
   btnClearSearch: document.getElementById('btn-clear-search'),
   logLevelSelect: document.getElementById('log-level-select'),
   btnRefreshConfigs: document.getElementById('btn-refresh-configs'),
-  btnDownload: document.getElementById('btn-download-config')
+  btnDownload: document.getElementById('btn-download-config'),
+  btnClearCache: document.getElementById('btn-clear-cache')
 };
 
 function shellQuote(value) {
@@ -384,11 +385,22 @@ async function downloadConfig(targetFile = null, targetUrl = null) {
 async function updateConfig(file) { const url = state.metadata[file]; if (!url) return; await downloadConfig(file, url); }
 async function deleteConfig(file) { if (!file) return; if (!confirm(`Точно удалить ${file}?`)) return; await exec(`rm -f ${shellQuote(`${MOD_PATH}/${file}`)}`); delete state.metadata[file]; await saveMetadata(); if (state.activeConfig === file) { state.activeConfig = ''; localStorage.removeItem('active_cfg'); await stopService(); } await scanConfigs(); await updateStatus(); }
 
+async function clearCache() {
+  if (!confirm('Точно очистить кэш sing-box (cache.db)?')) return;
+  try {
+    await exec(`rm -f ${shellQuote(`${MOD_PATH}/cache.db`)}`);
+    Toast.success('Кэш очищен', 'Файл cache.db удалён');
+  } catch (e) { Toast.error('Не удалось очистить кэш'); }
+  try { await scanConfigs(); } catch (e) {}
+  try { await updateStatus(); } catch (e) {}
+}
+
 function bindEvents() {
   document.querySelectorAll('.tab-item').forEach(el => el.addEventListener('click', () => setTab(el.dataset.tab)));
   if (els.mainSwitch) els.mainSwitch.addEventListener('click', () => toggleService());
   if (els.btnDownload) els.btnDownload.addEventListener('click', () => downloadConfig());
   if (els.btnRefreshConfigs) els.btnRefreshConfigs.addEventListener('click', () => scanConfigs());
+  if (els.btnClearCache) els.btnClearCache.addEventListener('click', () => clearCache());
   if (els.btnClearLogs) els.btnClearLogs.addEventListener('click', () => { if (state.logsPool && state.logsPool.length) { for (const n of state.logsPool) { n.style.display = 'none'; n.textContent = ''; } } else { const b = document.getElementById('logs-body'); if (b) b.innerHTML = ''; } state.seenLogs.clear(); state.recentLogs = []; state.logsWriteIndex = 0; state.logsCount = 0; });
   if (els.logsSearch) els.logsSearch.addEventListener('input', () => applyLogFilter());
   if (els.btnClearSearch) els.btnClearSearch.addEventListener('click', () => { if (els.logsSearch) { els.logsSearch.value = ''; applyLogFilter(); } });
