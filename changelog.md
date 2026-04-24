@@ -1,4 +1,7 @@
-***v1.0.3 – Version Changes:***
+***v1.0.4 – Version Changes:***
 
--> fixed auto-update daemon (it was missing in the release package)
--> restored basic functionality
+-> redesign web interface
+
+-> added stat history
+
+-> added stat daemon toggle

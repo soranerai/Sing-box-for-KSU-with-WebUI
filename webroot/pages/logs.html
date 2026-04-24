@@ -1,0 +1,32 @@
+<div class="card elevated">
+  <div class="card-inner flex-col full-height">
+    <div class="card-head">
+      <h3 class="section-title">Логи</h3>
+      <div class="toolbar">
+        <div class="md3-select">
+          <select id="log-level-select">
+            <option value="debug">Debug</option>
+            <option value="info" selected>Info</option>
+            <option value="warn">Warn</option>
+            <option value="error">Error</option>
+          </select>
+          <span class="material-symbols-rounded">arrow_drop_down</span>
+        </div>
+        <button class="md3-icon-btn" id="btn-clear-logs" title="Очистить">
+          <span class="material-symbols-rounded">delete</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="logs-search-bar">
+      <span class="material-symbols-rounded">search</span>
+      <input id="logs-search" class="md3-input" type="search" placeholder="Поиск в логах..." />
+    </div>
+    
+    <div class="log-panel-wrapper">
+      <div class="logs-body" id="logs-body">
+        <!-- Логи будут здесь -->
+      </div>
+    </div>
+  </div>
+</div>

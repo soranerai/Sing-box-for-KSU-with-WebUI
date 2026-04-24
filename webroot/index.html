@@ -1,188 +1,57 @@
 <!DOCTYPE html>
 <html lang="ru" data-theme="system">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <title>Sing-Box Manager</title>
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-  
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"
+    rel="stylesheet" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js?v=2"></script>
+
   <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
   <div id="toast-container"></div>
-  
+
   <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <h1>Sing-box</h1>
-      </div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
-        <div class="chip" id="chip-runtime">
-          <span class="material-symbols-rounded">pending</span>
-          <span>Проверка...</span>
-        </div>
-        <div class="chip" id="chip-updater">
+    <header class="topbar" style="justify-content: space-between; display: flex; width: 100%;">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <div class="chip" id="chip-updater" style="cursor: pointer;"
+          title="Нажмите, чтобы переключить фоновый демон обновления">
           <span class="material-symbols-rounded">sync</span>
-          <span>Демон: Проверка...</span>
+          <span>Обновления</span>
         </div>
+        <div class="chip" id="chip-stat-daemon" style="cursor: pointer;"
+          title="Нажмите, чтобы переключить демон статистики">
+          <span class="material-symbols-rounded">query_stats</span>
+          <span>Статистика</span>
+        </div>
+      </div>
+      <div class="chip" id="chip-runtime">
+        <span class="material-symbols-rounded">pending</span>
+        <span>Проверка...</span>
       </div>
     </header>
 
     <main>
       <!-- СТАТУС -->
-      <section id="tab-home" class="page active">
-        <div class="card elevated main-status-card">
-          <div class="card-inner">
-            <div class="status-row">
-              <div class="status-main">
-                <div id="st-label" class="status-label">Загрузка…</div>
-                <div id="st-detail" class="status-detail">Проверка процесса и активного конфига</div>
-              </div>
-              <label class="md3-switch" title="Переключить сервис">
-                <input type="checkbox" id="main-switch">
-                <span class="md3-switch-track">
-                  <span class="md3-switch-thumb">
-                    <span class="material-symbols-rounded icon-on">check</span>
-                    <span class="material-symbols-rounded icon-off">close</span>
-                  </span>
-                </span>
-              </label>
-            </div>
-            
-            <div class="status-row" style="padding-top: 20px; margin-bottom: 24px;">
-              <div class="status-main">
-                <div class="status-label" style="font-size: 24px;">Автообновление</div>
-                <div class="status-detail">Фоновый процесс проверки конфигов</div>
-              </div>
-              <label class="md3-switch" title="Запустить фоновый демон обновления">
-                <input type="checkbox" id="updater-switch">
-                <span class="md3-switch-track">
-                  <span class="md3-switch-thumb">
-                    <span class="material-symbols-rounded icon-on">check</span>
-                    <span class="material-symbols-rounded icon-off">close</span>
-                  </span>
-                </span>
-              </label>
-            </div>
-
-            <div class="metrics-grid">
-              <div class="metric-card">
-                <div class="metric-head">
-                  <span class="material-symbols-rounded">download</span>
-                  <div class="metric-info">
-                    <span class="metric-title">Загрузка</span>
-                    <span class="metric-value" id="down-value">0 B/s</span>
-                  </div>
-                </div>
-                <div class="chart-container"><canvas id="chart-down"></canvas></div>
-              </div>
-              
-              <div class="metric-card">
-                <div class="metric-head">
-                  <span class="material-symbols-rounded">upload</span>
-                  <div class="metric-info">
-                    <span class="metric-title">Отдача</span>
-                    <span class="metric-value" id="up-value">0 B/s</span>
-                  </div>
-                </div>
-                <div class="chart-container"><canvas id="chart-up"></canvas></div>
-              </div>
-              
-              <div class="metric-card">
-                <div class="metric-head">
-                  <span class="material-symbols-rounded">lan</span>
-                  <div class="metric-info">
-                    <span class="metric-title">Соединения</span>
-                    <span class="metric-value" id="conn-value">0</span>
-                  </div>
-                </div>
-                <div class="chart-container"><canvas id="chart-conns"></canvas></div>
-              </div>
-              
-              <div class="metric-card">
-                <div class="metric-head">
-                  <span class="material-symbols-rounded">memory</span>
-                  <div class="metric-info">
-                    <span class="metric-title">Память</span>
-                    <span class="metric-value" id="mem-value">0 B</span>
-                  </div>
-                </div>
-                <div class="chart-container"><canvas id="chart-mem"></canvas></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section id="tab-home" class="page active"></section>
 
       <!-- ЛОГИ -->
-      <section id="tab-logs" class="page">
-        <div class="card elevated">
-          <div class="card-inner flex-col full-height">
-            <div class="card-head">
-              <h3 class="section-title">Логи</h3>
-              <div class="toolbar">
-                <div class="md3-select">
-                  <select id="log-level-select">
-                    <option value="debug">Debug</option>
-                    <option value="info" selected>Info</option>
-                    <option value="warn">Warn</option>
-                    <option value="error">Error</option>
-                  </select>
-                  <span class="material-symbols-rounded">arrow_drop_down</span>
-                </div>
-                <button class="md3-icon-btn" id="btn-clear-logs" title="Очистить">
-                  <span class="material-symbols-rounded">delete</span>
-                </button>
-              </div>
-            </div>
-            
-            <div class="logs-search-bar">
-              <span class="material-symbols-rounded">search</span>
-              <input id="logs-search" class="md3-input" type="search" placeholder="Поиск в логах..." />
-            </div>
-            
-            <div class="log-panel-wrapper">
-              <div class="logs-body" id="logs-body">
-                <!-- Логи будут здесь -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section id="tab-logs" class="page"></section>
 
       <!-- КОНФИГИ -->
-      <section id="tab-config" class="page">
-        <div class="card elevated">
-          <div class="card-inner">
-            <div class="card-head">
-              <div class="badge-container">
-                <span class="md3-badge" id="cfg-summary">Конфигов: —</span>
-              </div>
-              <div class="toolbar">
-                <button class="md3-icon-btn" id="btn-refresh-configs" title="Обновить">
-                  <span class="material-symbols-rounded">refresh</span>
-                </button>
-                <button class="md3-icon-btn" id="btn-clear-cache" title="Очистить кэш">
-                  <span class="material-symbols-rounded">mop</span>
-                </button>
-              </div>
-            </div>
-
-            <div id="config-list" class="config-list"></div>
-          </div>
-        </div>
-        
-        <!-- FAB Add -->
-        <button class="md3-fab primary" id="btn-open-add" title="Добавить конфиг">
-          <span class="material-symbols-rounded">add</span>
-        </button>
-      </section>
+      <section id="tab-config" class="page"></section>
     </main>
 
     <!-- Модальное окно добавления -->
@@ -201,13 +70,13 @@
             <input type="url" id="new-cfg-url" placeholder=" " />
             <label>URL ссылки</label>
           </div>
-          
+
           <!-- Auto update options -->
           <label class="md3-checkbox-label">
             <input type="checkbox" id="cfg-auto-update" checked>
             Автообновление
           </label>
-          
+
           <div class="md3-select" id="cfg-interval-wrapper">
             <select id="cfg-update-interval">
               <option value="1">Раз в 1 час</option>
@@ -217,7 +86,7 @@
             </select>
             <span class="material-symbols-rounded">arrow_drop_down</span>
           </div>
-          
+
         </div>
         <div class="dialog-actions">
           <button class="md3-btn text" id="btn-cancel-add">Отмена</button>
@@ -248,6 +117,7 @@
     </div>
   </nav>
 
-  <script src="js/app.js" type="module"></script>
+  <script src="js/app.js?v=2" type="module"></script>
 </body>
+
 </html>

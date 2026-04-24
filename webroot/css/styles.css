@@ -27,33 +27,33 @@
   --duration-long: 500ms;
 }
 
-/* Light Theme (Burgundy Accent) */
+/* Light Theme (Expressive Blue) */
 :root, [data-theme="light"] {
-  --md-sys-color-background: #FFF8F8;
-  --md-sys-color-on-background: #201A1B;
-  --md-sys-color-surface: #FFF8F8;
-  --md-sys-color-surface-container-low: #FDF0F1;
-  --md-sys-color-surface-container: #F8E7E9;
-  --md-sys-color-surface-container-high: #F2DEE1;
-  --md-sys-color-on-surface: #201A1B;
-  --md-sys-color-on-surface-variant: #524345;
-  --md-sys-color-outline: #857375;
-  --md-sys-color-outline-variant: #D7C1C3;
+  --md-sys-color-background: #F8F9FA;
+  --md-sys-color-on-background: #1A1C1E;
+  --md-sys-color-surface: #F8F9FA;
+  --md-sys-color-surface-container-low: #F1F4F8;
+  --md-sys-color-surface-container: #E9EEF4;
+  --md-sys-color-surface-container-high: #E1E8F0;
+  --md-sys-color-on-surface: #1A1C1E;
+  --md-sys-color-on-surface-variant: #43474E;
+  --md-sys-color-outline: #73777F;
+  --md-sys-color-outline-variant: #C3C6CF;
   
-  --md-sys-color-primary: #9C3A50;
+  --md-sys-color-primary: #0061A4;
   --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #FFD9DF;
-  --md-sys-color-on-primary-container: #3F0014;
+  --md-sys-color-primary-container: #D1E4FF;
+  --md-sys-color-on-primary-container: #001D36;
   
-  --md-sys-color-secondary: #76565A;
+  --md-sys-color-secondary: #535F70;
   --md-sys-color-on-secondary: #FFFFFF;
-  --md-sys-color-secondary-container: #FFD9DE;
-  --md-sys-color-on-secondary-container: #2C1518;
+  --md-sys-color-secondary-container: #D7E3F7;
+  --md-sys-color-on-secondary-container: #101C2B;
 
-  --md-sys-color-tertiary: #785831;
+  --md-sys-color-tertiary: #6B5778;
   --md-sys-color-on-tertiary: #FFFFFF;
-  --md-sys-color-tertiary-container: #FFDDB5;
-  --md-sys-color-on-tertiary-container: #2A1700;
+  --md-sys-color-tertiary-container: #F2DAFF;
+  --md-sys-color-on-tertiary-container: #251431;
   
   --md-sys-color-error: #BA1A1A;
   --md-sys-color-error-container: #FFDAD6;
@@ -64,47 +64,47 @@
   --md-sys-color-success-container: #E6F4EA;
   --md-sys-color-on-success-container: #0D5322;
   
-  --chart-blue: #9C3A50;
+  --chart-blue: #0061A4;
   --chart-red: #BA1A1A;
   --chart-green: #1E8E3E;
-  --chart-purple: #785831;
+  --chart-purple: #6B5778;
   
   --log-bg-info: rgba(0,0,0,0.02);
   --log-bg-warn: rgba(255, 165, 0, 0.1);
   --log-bg-error: rgba(186, 26, 26, 0.1);
-  --log-text-info: #201A1B;
+  --log-text-info: #1A1C1E;
   --log-text-warn: #8C5C00;
   --log-text-error: #BA1A1A;
 }
 
-/* Dark Theme (OLED Burgundy) */
+/* Dark Theme (OLED Expressive Blue) */
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"], [data-theme="dark"] {
     --md-sys-color-background: #000000;
-    --md-sys-color-on-background: #ECE0E1;
+    --md-sys-color-on-background: #E2E2E6;
     --md-sys-color-surface: #000000;
-    --md-sys-color-surface-container-low: #0A0002;
-    --md-sys-color-surface-container: #150005;
-    --md-sys-color-surface-container-high: #21000B;
-    --md-sys-color-on-surface: #ECE0E1;
-    --md-sys-color-on-surface-variant: #D7C1C3;
-    --md-sys-color-outline: #A08C8E;
-    --md-sys-color-outline-variant: #322023; /* Explicit borders for blocks */
+    --md-sys-color-surface-container-low: #0A0D10;
+    --md-sys-color-surface-container: #101418;
+    --md-sys-color-surface-container-high: #161A1F;
+    --md-sys-color-on-surface: #E2E2E6;
+    --md-sys-color-on-surface-variant: #C3C6CF;
+    --md-sys-color-outline: #8D9199;
+    --md-sys-color-outline-variant: #43474E;
     
-    --md-sys-color-primary: #FFB3C3;
-    --md-sys-color-on-primary: #5F0B23;
-    --md-sys-color-primary-container: #7E2239;
-    --md-sys-color-on-primary-container: #FFD9DF;
+    --md-sys-color-primary: #9ECAFF;
+    --md-sys-color-on-primary: #003258;
+    --md-sys-color-primary-container: #00497D;
+    --md-sys-color-on-primary-container: #D1E4FF;
     
-    --md-sys-color-secondary: #E6BDC1;
-    --md-sys-color-on-secondary: #43292D;
-    --md-sys-color-secondary-container: #5C3F43;
-    --md-sys-color-on-secondary-container: #FFD9DE;
+    --md-sys-color-secondary: #BBC7DB;
+    --md-sys-color-on-secondary: #253140;
+    --md-sys-color-secondary-container: #3B4858;
+    --md-sys-color-on-secondary-container: #D7E3F7;
 
-    --md-sys-color-tertiary: #E8C08F;
-    --md-sys-color-on-tertiary: #442B07;
-    --md-sys-color-tertiary-container: #5E411C;
-    --md-sys-color-on-tertiary-container: #FFDDB5;
+    --md-sys-color-tertiary: #D6BEE4;
+    --md-sys-color-on-tertiary: #3B2948;
+    --md-sys-color-tertiary-container: #523F5F;
+    --md-sys-color-on-tertiary-container: #F2DAFF;
     
     --md-sys-color-error: #FFB4AB;
     --md-sys-color-error-container: #93000A;
@@ -115,15 +115,15 @@
     --md-sys-color-success-container: #1E8E3E;
     --md-sys-color-on-success-container: #E6F4EA;
     
-    --chart-blue: #FFB3C3;
+    --chart-blue: #9ECAFF;
     --chart-red: #FFB4AB;
     --chart-green: #81C995;
-    --chart-purple: #E8C08F;
+    --chart-purple: #D6BEE4;
     
     --log-bg-info: rgba(255,255,255,0.05);
     --log-bg-warn: rgba(255, 165, 0, 0.1);
     --log-bg-error: rgba(255, 180, 171, 0.1);
-    --log-text-info: #ECE0E1;
+    --log-text-info: #E2E2E6;
     --log-text-warn: #FFB74D;
     --log-text-error: #FFB4AB;
   }
@@ -283,10 +283,10 @@ button, input, select {
 }
 .md3-switch-thumb {
   position: absolute;
-  height: 24px;
-  width: 24px;
-  left: 2px;
-  bottom: 2px;
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
   background-color: var(--md-sys-color-outline);
   border-radius: 50%;
   transition: all var(--duration-short) var(--easing-standard);
@@ -308,11 +308,12 @@ button, input, select {
   border-color: var(--md-sys-color-primary);
 }
 .md3-switch input:checked + .md3-switch-track .md3-switch-thumb {
-  transform: translateX(20px);
+  transform: translateX(24px);
   background-color: var(--md-sys-color-on-primary);
-  height: 28px;
-  width: 28px;
-  bottom: 0px;
+  height: 24px;
+  width: 24px;
+  bottom: 2px;
+  left: 2px;
 }
 .md3-switch input:checked + .md3-switch-track .md3-switch-thumb .icon-off { opacity: 0; }
 .md3-switch input:checked + .md3-switch-track .md3-switch-thumb .icon-on { opacity: 1; color: var(--md-sys-color-primary); }
