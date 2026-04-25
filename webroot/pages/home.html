@@ -1,65 +1,47 @@
-<div class="card elevated main-status-card">
-  <div class="card-inner">
-    <div class="status-row">
-      <div class="status-main">
-        <div id="st-label" class="status-label">Загрузка…</div>
-        <div id="st-detail" class="status-detail">Проверка процесса и активного конфига</div>
+<div class="home-page-content">
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-head">
+        <span class="material-symbols-rounded">download</span>
+        <div class="metric-info">
+          <span class="metric-title">Загрузка</span>
+          <span class="metric-value" id="down-value">0 B/s</span>
+        </div>
       </div>
-      <label class="md3-switch" title="Переключить сервис">
-        <input type="checkbox" id="main-switch">
-        <span class="md3-switch-track">
-          <span class="md3-switch-thumb">
-            <span class="material-symbols-rounded icon-on">check</span>
-            <span class="material-symbols-rounded icon-off">close</span>
-          </span>
-        </span>
-      </label>
+      <div class="chart-container"><canvas id="chart-down"></canvas></div>
     </div>
-
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-head">
-          <span class="material-symbols-rounded">download</span>
-          <div class="metric-info">
-            <span class="metric-title">Загрузка</span>
-            <span class="metric-value" id="down-value">0 B/s</span>
-          </div>
+    
+    <div class="metric-card">
+      <div class="metric-head">
+        <span class="material-symbols-rounded">upload</span>
+        <div class="metric-info">
+          <span class="metric-title">Отдача</span>
+          <span class="metric-value" id="up-value">0 B/s</span>
         </div>
-        <div class="chart-container"><canvas id="chart-down"></canvas></div>
       </div>
-      
-      <div class="metric-card">
-        <div class="metric-head">
-          <span class="material-symbols-rounded">upload</span>
-          <div class="metric-info">
-            <span class="metric-title">Отдача</span>
-            <span class="metric-value" id="up-value">0 B/s</span>
-          </div>
+      <div class="chart-container"><canvas id="chart-up"></canvas></div>
+    </div>
+    
+    <div class="metric-card">
+      <div class="metric-head">
+        <span class="material-symbols-rounded">lan</span>
+        <div class="metric-info">
+          <span class="metric-title">Соединения</span>
+          <span class="metric-value" id="conn-value">0</span>
         </div>
-        <div class="chart-container"><canvas id="chart-up"></canvas></div>
       </div>
-      
-      <div class="metric-card">
-        <div class="metric-head">
-          <span class="material-symbols-rounded">lan</span>
-          <div class="metric-info">
-            <span class="metric-title">Соединения</span>
-            <span class="metric-value" id="conn-value">0</span>
-          </div>
+      <div class="chart-container"><canvas id="chart-conns"></canvas></div>
+    </div>
+    
+    <div class="metric-card">
+      <div class="metric-head">
+        <span class="material-symbols-rounded">memory</span>
+        <div class="metric-info">
+          <span class="metric-title">Память</span>
+          <span class="metric-value" id="mem-value">0 B</span>
         </div>
-        <div class="chart-container"><canvas id="chart-conns"></canvas></div>
       </div>
-      
-      <div class="metric-card">
-        <div class="metric-head">
-          <span class="material-symbols-rounded">memory</span>
-          <div class="metric-info">
-            <span class="metric-title">Память</span>
-            <span class="metric-value" id="mem-value">0 B</span>
-          </div>
-        </div>
-        <div class="chart-container"><canvas id="chart-mem"></canvas></div>
-      </div>
+      <div class="chart-container"><canvas id="chart-mem"></canvas></div>
     </div>
   </div>
 </div>

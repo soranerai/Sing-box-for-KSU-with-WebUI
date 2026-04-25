@@ -86,6 +86,17 @@ const App = {
       });
     }
 
+    const fabProxy = document.getElementById('fab-proxy');
+    if (fabProxy) {
+      fabProxy.addEventListener('click', async () => {
+        if (this.serviceRunning) {
+          await this.stopService();
+        } else {
+          await this.startService();
+        }
+      });
+    }
+
     const chipUpdater = document.getElementById('chip-updater');
     if (chipUpdater) {
       chipUpdater.addEventListener('click', async (e) => {
@@ -159,8 +170,16 @@ const App = {
       const pid = (pidRaw || '').split(/\s+/)[0] || '';
       this.serviceRunning = Boolean(pid && pid !== 'error');
       
-      const sw = document.getElementById('main-switch');
-      if (sw) sw.checked = this.serviceRunning;
+      const fab = document.getElementById('fab-proxy');
+      if (fab) {
+        if (this.serviceRunning) {
+          fab.classList.add('active');
+          fab.title = "Остановить прокси";
+        } else {
+          fab.classList.remove('active');
+          fab.title = "Запустить прокси";
+        }
+      }
 
       let uptimeStr = '';
       if (this.serviceRunning && this.metadata?.serviceStart) {
@@ -168,26 +187,14 @@ const App = {
         uptimeStr = formatDuration(elapsed);
       }
 
-      const stLabel = document.getElementById('st-label');
-      const stDetail = document.getElementById('st-detail');
       const chip = document.getElementById('chip-runtime');
 
       if (this.serviceRunning) {
-        if(stLabel) {
-          stLabel.textContent = 'Работает';
-          stLabel.style.color = 'var(--md-sys-color-primary)';
-        }
-        if(stDetail) stDetail.textContent = `Конфиг: ${displayName(this.activeConfig)}`;
         if(chip) {
           chip.innerHTML = `<span class="material-symbols-rounded" style="color:var(--md-sys-color-success)">check_circle</span><span>PID ${pid} ${uptimeStr ? '· '+uptimeStr : ''}</span>`;
           chip.classList.add('active');
         }
       } else {
-        if(stLabel) {
-          stLabel.textContent = 'Выключен';
-          stLabel.style.color = 'var(--md-sys-color-on-surface)';
-        }
-        if(stDetail) stDetail.textContent = 'Сервис не активен';
         if(chip) {
           chip.innerHTML = `<span class="material-symbols-rounded">pause_circle</span><span>Остановлен</span>`;
           chip.classList.remove('active');
@@ -206,11 +213,11 @@ const App = {
       const chipUpd = document.getElementById('chip-updater');
       if (chipUpd) {
         if (this.updaterRunning) {
-          chipUpd.innerHTML = `<span class="material-symbols-rounded" style="color:var(--md-sys-color-primary)">sync</span><span>Обновления</span>`;
           chipUpd.classList.add('active');
+          chipUpd.innerHTML = `<span class="material-symbols-rounded">sync</span>`;
         } else {
-          chipUpd.innerHTML = `<span class="material-symbols-rounded">sync_disabled</span><span>Обновления</span>`;
           chipUpd.classList.remove('active');
+          chipUpd.innerHTML = `<span class="material-symbols-rounded">sync_disabled</span>`;
         }
       }
 
@@ -220,11 +227,11 @@ const App = {
       const chipStat = document.getElementById('chip-stat-daemon');
       if (chipStat) {
         if (this.statDaemonRunning) {
-          chipStat.innerHTML = `<span class="material-symbols-rounded" style="color:var(--md-sys-color-primary)">query_stats</span><span>Статистика</span>`;
           chipStat.classList.add('active');
+          chipStat.innerHTML = `<span class="material-symbols-rounded">query_stats</span>`;
         } else {
-          chipStat.innerHTML = `<span class="material-symbols-rounded">analytics</span><span>Статистика выкл.</span>`;
           chipStat.classList.remove('active');
+          chipStat.innerHTML = `<span class="material-symbols-rounded">analytics</span>`;
         }
       }
     } catch (e) {
@@ -238,16 +245,65 @@ const App = {
       return;
     }
     try {
+      const originalPath = `${MOD_PATH}/configs/${this.activeConfig}`;
+      const tempReadPath = `${MOD_PATH}/webroot/_temp_read.json`;
+      
+      // Copy to webroot to bypass bridge limit
+      await Api.exec(`cp ${shellQuote(originalPath)} ${shellQuote(tempReadPath)} && chmod 644 ${shellQuote(tempReadPath)}`);
+      
+      const response = await fetch(`_temp_read.json?v=${Date.now()}`);
+      if (!response.ok) throw new Error("Не удалось загрузить временный файл через fetch");
+      const raw = await response.text();
+      
+      // Cleanup temp read file
+      Api.exec(`rm -f ${shellQuote(tempReadPath)}`);
+
+      let config;
+      try {
+        config = JSON.parse(raw);
+      } catch (e) {
+        console.error("JSON Parse Error:", e, "Raw sample:", raw.substring(0, 100));
+        throw new Error("Ошибка формата JSON (возможно, в файле есть комментарии)");
+      }
+
+      // Inject / Force clash_api settings
+      if (!config.experimental) config.experimental = {};
+      config.experimental.clash_api = {
+        external_controller: "127.0.0.1:9090",
+        external_ui: "secret"
+      };
+
+      // Save to temporary execution config (using chunked write to avoid bridge limits)
+      const runConfigPath = `${MOD_PATH}/run_config.json`;
+      const modifiedJson = JSON.stringify(config, null, 2);
+      
+      await this.safeWriteFile(runConfigPath, modifiedJson);
+
       await Api.exec(`chmod +x ${shellQuote(BIN_PATH)} 2>/dev/null || true`);
-      const cmd = `cd ${shellQuote(MOD_PATH)} && nohup ${shellQuote(BIN_PATH)} run -c ${shellQuote(MOD_PATH + '/configs/' + this.activeConfig)} >> run.log 2>&1 &`;
+      const cmd = `cd ${shellQuote(MOD_PATH)} && nohup ${shellQuote(BIN_PATH)} run -c ${shellQuote(runConfigPath)} >> run.log 2>&1 &`;
       await Api.exec(cmd);
+      
       await wait(500);
       this.metadata.serviceStart = Date.now();
       await Api.saveMetadata(this.metadata);
       await this.updateStatus();
     } catch (e) {
-      Toast.error("Не удалось запустить sing-box");
+      Toast.error(e.message || "Не удалось запустить sing-box");
+      console.error(e);
     }
+  },
+
+  async safeWriteFile(path, content) {
+    // Split into chunks of 2KB to stay safe within KSU bridge limits
+    const b64 = btoa(unescape(encodeURIComponent(content)));
+    const chunks = b64.match(/.{1,2048}/g) || [];
+    
+    const b64Path = `${path}.b64`;
+    await Api.exec(`true > ${shellQuote(b64Path)}`);
+    for (const chunk of chunks) {
+      await Api.exec(`printf "%s" ${shellQuote(chunk)} >> ${shellQuote(b64Path)}`);
+    }
+    await Api.exec(`busybox base64 -d ${shellQuote(b64Path)} > ${shellQuote(path)} && rm -f ${shellQuote(b64Path)}`);
   },
 
   async stopService() {

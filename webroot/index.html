@@ -24,20 +24,16 @@
   <div id="toast-container"></div>
 
   <div class="app-shell">
-    <header class="topbar" style="justify-content: space-between; display: flex; width: 100%;">
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <div class="chip" id="chip-updater" style="cursor: pointer;"
-          title="Нажмите, чтобы переключить фоновый демон обновления">
+    <header class="topbar">
+      <div class="header-actions">
+        <div class="chip-btn" id="chip-updater" title="Фоновый демон обновления">
           <span class="material-symbols-rounded">sync</span>
-          <span>Обновления</span>
         </div>
-        <div class="chip" id="chip-stat-daemon" style="cursor: pointer;"
-          title="Нажмите, чтобы переключить демон статистики">
+        <div class="chip-btn" id="chip-stat-daemon" title="Демон статистики">
           <span class="material-symbols-rounded">query_stats</span>
-          <span>Статистика</span>
         </div>
       </div>
-      <div class="chip" id="chip-runtime">
+      <div class="chip-status" id="chip-runtime">
         <span class="material-symbols-rounded">pending</span>
         <span>Проверка...</span>
       </div>
@@ -53,6 +49,10 @@
       <!-- КОНФИГИ -->
       <section id="tab-config" class="page"></section>
     </main>
+
+    <button id="fab-proxy" class="md3-fab" title="Переключить прокси">
+      <span class="material-symbols-rounded">power_settings_new</span>
+    </button>
 
     <!-- Модальное окно добавления -->
     <div id="add-panel" class="md3-dialog-backdrop">
