@@ -1,7 +1,7 @@
-***v1.0.4 – Version Changes:***
+***v1.0.5 – Version Changes:***
 
 -> redesign web interface
 
--> added stat history
+-> added logs history
 
--> added stat daemon toggle
+-> added auto clash injection
