@@ -648,6 +648,13 @@ button, input, select {
   transform: rotate(180deg);
 }
 
+/* Specific FAB positions */
+#btn-open-add {
+  bottom: calc(180px + env(safe-area-inset-bottom));
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
 /* Bottom Nav */
 .bottom-nav {
   position: fixed;
