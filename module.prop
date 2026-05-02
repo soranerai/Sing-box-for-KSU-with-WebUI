@@ -1,7 +1,7 @@
 id=singbox_ksu
 name=Sing-box KSU
-version=v1.0.5
-versionCode=105
+version=v1.0.6
+versionCode=106
 author=soranerai
 description=Sing-box core with WebUI
 banner=banner.jpg

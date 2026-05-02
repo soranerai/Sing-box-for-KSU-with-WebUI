@@ -11,29 +11,60 @@ const App = {
   serviceRunning: false,
   updaterRunning: false,
   statDaemonRunning: false,
-  
+  apiType: '',
+
   async init() {
+    this.detectApiType();
     Toast.init();
     Toast.info("App init started");
-    
+
     await this.loadPartials();
-    
+
     this.metadata = await Api.loadMetadata();
-    
+
     this.logViewer = new LogViewer(() => this.getToken());
     this.trafficMonitor = new TrafficMonitor(() => this.getToken());
     this.configManager = new ConfigManager(this);
-    
+
     this.bindUI();
     await this.configManager.scanConfigs();
     await this.updateStatus();
     await this.updateDaemonStatus();
-    
+
     this.logViewer.start();
     this.trafficMonitor.start();
-    
+
     setInterval(() => this.updateStatus(), 2000);
     setInterval(() => this.updateDaemonStatus(), 3000);
+  },
+
+  detectApiType() {
+    const isKsu = typeof window.ksu !== 'undefined' || typeof ksu !== 'undefined';
+    const isApatch = typeof window.apatch !== 'undefined' || typeof apatch !== 'undefined' || 
+                     typeof window.ap !== 'undefined' || typeof ap !== 'undefined';
+    
+    if (isKsu) {
+      this.apiType = 'ksu';
+    } else if (isApatch) {
+      this.apiType = 'apatch';
+    } else {
+      this.apiType = 'unknown';
+    }
+    console.log(`[App] Detected Root Type: ${this.apiType}`);
+  },
+
+  async optimizeProcess(pid) {
+    if (!pid) return;
+    const p = String(pid).trim();
+    // Try to move to high priority cgroups and renice
+    const cgroupCmd = `
+      echo ${p} > /dev/stune/top-app/tasks 2>/dev/null || true;
+      echo ${p} > /dev/stune/foreground/tasks 2>/dev/null || true;
+      echo ${p} > /dev/cpuctl/top-app/cgroup.procs 2>/dev/null || true;
+      echo ${p} > /dev/cpuctl/foreground/cgroup.procs 2>/dev/null || true;
+      renice -n -10 -p ${p} 2>/dev/null || true;
+    `;
+    await Api.exec(cgroupCmd);
   },
 
   getToken() {
@@ -50,7 +81,7 @@ const App = {
       document.getElementById('tab-home').innerHTML = homeHtml;
       document.getElementById('tab-logs').innerHTML = logsHtml;
       document.getElementById('tab-config').innerHTML = configHtml;
-    } catch(e) {
+    } catch (e) {
       console.error("Ошибка загрузки partials", e);
     }
   },
@@ -59,13 +90,13 @@ const App = {
     document.querySelectorAll('.nav-item').forEach(el => {
       el.addEventListener('click', () => {
         const tabId = el.dataset.tab;
-        
+
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
-        
+
         document.getElementById(tabId).classList.add('active');
         el.classList.add('active');
-        
+
         if (tabId === 'tab-logs') {
           this.logViewer.start();
         } else {
@@ -122,10 +153,10 @@ const App = {
     }
 
     const btnRefresh = document.getElementById('btn-refresh-configs');
-    if(btnRefresh) btnRefresh.addEventListener('click', () => this.configManager.scanConfigs());
-    
+    if (btnRefresh) btnRefresh.addEventListener('click', () => this.configManager.scanConfigs());
+
     const btnClearCache = document.getElementById('btn-clear-cache');
-    if(btnClearCache) btnClearCache.addEventListener('click', async () => {
+    if (btnClearCache) btnClearCache.addEventListener('click', async () => {
       if (!confirm('Очистить кэш sing-box (cache.db)?')) return;
       try {
         await Api.exec(`rm -f ${shellQuote(`${MOD_PATH}/cache.db`)}`);
@@ -136,26 +167,26 @@ const App = {
         Toast.error('Ошибка при очистке');
       }
     });
-    
+
     const addDialog = document.getElementById('add-panel');
     const autoUpdateCheck = document.getElementById('cfg-auto-update');
     const intervalWrapper = document.getElementById('cfg-interval-wrapper');
-    
+
     const btnOpenAdd = document.getElementById('btn-open-add');
-    if(btnOpenAdd) btnOpenAdd.addEventListener('click', () => {
-      if(addDialog) addDialog.classList.add('open');
+    if (btnOpenAdd) btnOpenAdd.addEventListener('click', () => {
+      if (addDialog) addDialog.classList.add('open');
       document.getElementById('new-cfg-name').value = '';
       document.getElementById('new-cfg-url').value = '';
     });
-    
+
     const btnCancelAdd = document.getElementById('btn-cancel-add');
-    if(btnCancelAdd) btnCancelAdd.addEventListener('click', () => {
-      if(addDialog) addDialog.classList.remove('open');
+    if (btnCancelAdd) btnCancelAdd.addEventListener('click', () => {
+      if (addDialog) addDialog.classList.remove('open');
     });
-    
+
     const btnDownload = document.getElementById('btn-download-config');
-    if(btnDownload) btnDownload.addEventListener('click', () => this.configManager.downloadConfig());
-    
+    if (btnDownload) btnDownload.addEventListener('click', () => this.configManager.downloadConfig());
+
     if (autoUpdateCheck && intervalWrapper) {
       autoUpdateCheck.addEventListener('change', (e) => {
         intervalWrapper.style.opacity = e.target.checked ? '1' : '0.5';
@@ -169,7 +200,7 @@ const App = {
       const pidRaw = String(await Api.exec('pidof sing-box')).trim();
       const pid = (pidRaw || '').split(/\s+/)[0] || '';
       this.serviceRunning = Boolean(pid && pid !== 'error');
-      
+
       const fab = document.getElementById('fab-proxy');
       if (fab) {
         if (this.serviceRunning) {
@@ -190,12 +221,12 @@ const App = {
       const chip = document.getElementById('chip-runtime');
 
       if (this.serviceRunning) {
-        if(chip) {
-          chip.innerHTML = `<span class="material-symbols-rounded" style="color:var(--md-sys-color-success)">check_circle</span><span>PID ${pid} ${uptimeStr ? '· '+uptimeStr : ''}</span>`;
+        if (chip) {
+          chip.innerHTML = `<span class="material-symbols-rounded" style="color:var(--md-sys-color-success)">check_circle</span><span>PID ${pid} ${uptimeStr ? '· ' + uptimeStr : ''}</span>`;
           chip.classList.add('active');
         }
       } else {
-        if(chip) {
+        if (chip) {
           chip.innerHTML = `<span class="material-symbols-rounded">pause_circle</span><span>Остановлен</span>`;
           chip.classList.remove('active');
         }
@@ -247,14 +278,14 @@ const App = {
     try {
       const originalPath = `${MOD_PATH}/configs/${this.activeConfig}`;
       const tempReadPath = `${MOD_PATH}/webroot/_temp_read.json`;
-      
+
       // Copy to webroot to bypass bridge limit
       await Api.exec(`cp ${shellQuote(originalPath)} ${shellQuote(tempReadPath)} && chmod 644 ${shellQuote(tempReadPath)}`);
-      
+
       const response = await fetch(`_temp_read.json?v=${Date.now()}`);
       if (!response.ok) throw new Error("Не удалось загрузить временный файл через fetch");
       const raw = await response.text();
-      
+
       // Cleanup temp read file
       Api.exec(`rm -f ${shellQuote(tempReadPath)}`);
 
@@ -276,13 +307,19 @@ const App = {
       // Save to temporary execution config (using chunked write to avoid bridge limits)
       const runConfigPath = `${MOD_PATH}/run_config.json`;
       const modifiedJson = JSON.stringify(config, null, 2);
-      
+
       await this.safeWriteFile(runConfigPath, modifiedJson);
 
       await Api.exec(`chmod +x ${shellQuote(BIN_PATH)} 2>/dev/null || true`);
-      const cmd = `cd ${shellQuote(MOD_PATH)} && nohup ${shellQuote(BIN_PATH)} run -c ${shellQuote(runConfigPath)} >> run.log 2>&1 &`;
-      await Api.exec(cmd);
-      
+      await Api.exec(`chcon u:object_r:system_file:s0 ${shellQuote(BIN_PATH)} 2>/dev/null || true`);
+
+      const cmd = `cd ${shellQuote(MOD_PATH)} && ( ${shellQuote(BIN_PATH)} run -c ${shellQuote(runConfigPath)} </dev/null >> run.log 2>&1 & echo $! )`;
+      const pid = String(await Api.exec(cmd)).trim();
+
+      if (pid && !isNaN(pid)) {
+        await this.optimizeProcess(pid);
+      }
+
       await wait(500);
       this.metadata.serviceStart = Date.now();
       await Api.saveMetadata(this.metadata);
@@ -297,13 +334,18 @@ const App = {
     // Split into chunks of 2KB to stay safe within KSU bridge limits
     const b64 = btoa(unescape(encodeURIComponent(content)));
     const chunks = b64.match(/.{1,2048}/g) || [];
-    
+
     const b64Path = `${path}.b64`;
     await Api.exec(`true > ${shellQuote(b64Path)}`);
     for (const chunk of chunks) {
       await Api.exec(`printf "%s" ${shellQuote(chunk)} >> ${shellQuote(b64Path)}`);
     }
-    await Api.exec(`busybox base64 -d ${shellQuote(b64Path)} > ${shellQuote(path)} && rm -f ${shellQuote(b64Path)}`);
+
+    if (this.apiType == "apatch") {
+      await Api.exec(`/data/adb/ap/bin/busybox base64 -d ${shellQuote(b64Path)} > ${shellQuote(path)} && rm -f ${shellQuote(b64Path)}`);
+    } else {
+      await Api.exec(`/data/adb/ksu/bin/busybox base64 -d ${shellQuote(b64Path)} > ${shellQuote(path)} && rm -f ${shellQuote(b64Path)}`);
+    }
   },
 
   async stopService() {
@@ -321,8 +363,12 @@ const App = {
   async startUpdaterDaemon() {
     try {
       await Api.exec(`chmod +x ${shellQuote(AUTOUPDATER_SCRIPT)} 2>/dev/null || true`);
-      const cmd = `cd ${shellQuote(MOD_PATH)} && nohup sh ${shellQuote(AUTOUPDATER_SCRIPT)} >> /dev/null 2>&1 &`;
-      await Api.exec(cmd);
+      const cmd = `cd ${shellQuote(MOD_PATH)} && ( sh ${shellQuote(AUTOUPDATER_SCRIPT)} </dev/null >> /dev/null 2>&1 & echo $! )`;
+      const pid = String(await Api.exec(cmd)).trim();
+
+      if (pid && !isNaN(pid)) {
+        await this.optimizeProcess(pid);
+      }
       await wait(500);
       await this.updateDaemonStatus();
       Toast.success("Демон автообновления запущен");
@@ -344,9 +390,14 @@ const App = {
 
   async startStatDaemon() {
     try {
-      await Api.exec(`chmod +x ${shellQuote(MOD_PATH + '/stat_daemon.sh')} 2>/dev/null || true`);
-      const cmd = `cd ${shellQuote(MOD_PATH)} && nohup sh stat_daemon.sh >> /dev/null 2>&1 &`;
-      await Api.exec(cmd);
+      const scriptPath = MOD_PATH + '/stat_daemon.sh';
+      await Api.exec(`chmod +x ${shellQuote(scriptPath)} 2>/dev/null || true`);
+      const cmd = `cd ${shellQuote(MOD_PATH)} && ( sh ${shellQuote(scriptPath)} </dev/null >> /dev/null 2>&1 & echo $! )`;
+      const pid = String(await Api.exec(cmd)).trim();
+
+      if (pid && !isNaN(pid)) {
+        await this.optimizeProcess(pid);
+      }
       await wait(500);
       await this.updateDaemonStatus();
       Toast.success("Демон статистики запущен");
